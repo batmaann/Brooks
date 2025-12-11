@@ -16,7 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from forge import views
+from utilities import views
+import forge.views
+import utilities.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('forge/', forge.views.forge),
+    path('utilities/', utilities.views.utilities),
 ]
