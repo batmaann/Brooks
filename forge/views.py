@@ -3,4 +3,4 @@ from django.http.response import HttpResponse
 # Create your views here.
 
 def forge(request):
-    return HttpResponse('привет гараж')
+    return render(request,'forge/forge.html')
