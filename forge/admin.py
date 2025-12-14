@@ -17,7 +17,11 @@ class Vehicle(admin.ModelAdmin):
 
 @admin.register(models.Refueling)
 class Refueling(admin.ModelAdmin):
-    pass
+    llist_display = ('date', 'vehicle', 'gas_station', 'fuel_quantity',
+                    'price_per_liter', 'total_cost', 'mileage')
+    search_fields = ('comment', 'gas_station__name')
+    date_hierarchy = 'date'
+
 
 
 @admin.register(models.FuelPrice)
