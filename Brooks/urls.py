@@ -20,9 +20,10 @@ from forge import views
 from utilities import views
 import forge.views
 import utilities.views
+from forge.views.forge import forge
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('forge/', forge.views.forge),
+    path('forge/', forge),
     path('utilities/', utilities.views.utilities),
 ]
