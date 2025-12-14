@@ -17,3 +17,19 @@ def createVehicle(request):
         return JsonResponse({'id': vehicle.id}, status=201)
     else:
         return JsonResponse({'not okey'}, status=200)
+
+
+@csrf_exempt
+def vehicle(request):
+    if request.method == 'GET':
+        qs = models.Vehicle.objects.all()
+        results = []
+        for vehicle in qs:
+            results.append({
+                'name': vehicle.name,
+                'brand': vehicle.brand,
+                'model': vehicle.model,
+                'license_plate': vehicle.license_plate,
+
+            })
+        return JsonResponse({'results': results})

@@ -25,5 +25,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('forge/', forge),
     path('createvehicle/', createVehicle),
+    path('vehicle/', vehicle),
     path('utilities/', utilities.views.utilities),
 ]
