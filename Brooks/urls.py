@@ -18,13 +18,19 @@ from django.contrib import admin
 from django.urls import path
 import forge.views
 from forge.views.vehicle import createVehicle, vehicle, Status
+from rest_framework.routers import DefaultRouter
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     #path('forge/', forge.views.vehicle),
     path('createvehicle/', forge.views.vehicle.createVehicle),
-    path('vehicle/', forge.views.vehicle.vehicle),
+    #path('vehicle/', forge.views.vehicle.vehicle),
     #path('utilities/', utilities.views.utilities),
     path('status/', forge.views.vehicle.Status.as_view()),
 
 ]
+
+router = DefaultRouter()
+router.register('vehicle', forge.views.vehicle.Vehicle)
+urlpatterns += router.urls
