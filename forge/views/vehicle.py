@@ -1,7 +1,9 @@
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from forge import models
-
+from django.views.generic import TemplateView
 
 @csrf_exempt
 def createVehicle(request):
@@ -33,3 +35,10 @@ def vehicle(request):
 
             })
         return JsonResponse({'results': results})
+
+
+class Status(APIView):
+    def get(self, request):
+
+        return Response({'status': 'oke'})
+
