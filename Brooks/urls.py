@@ -16,18 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-import forge.views
-from forge.views.vehicle import createVehicle, vehicle, Status
 from rest_framework.routers import DefaultRouter
+import forge.views.vehicle
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('forge/', forge.views.vehicle),
-    path('createvehicle/', forge.views.vehicle.createVehicle),
-    #path('vehicle/', forge.views.vehicle.vehicle),
-    #path('utilities/', utilities.views.utilities),
-    path('status/', forge.views.vehicle.Status.as_view()),
+
+    #path('status/', forge.views.vehicle.Status.as_view()),
 
 ]
 
