@@ -2,4 +2,5 @@
 Django==5.2.8
 django-filter==22.1
 djangorestframework==3.14.0
-
+django-rest-swagger==2.2.0
+legacy-cgi==2.6.3
