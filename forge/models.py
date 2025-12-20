@@ -173,7 +173,7 @@ class FuelPrice(models.Model):
         return f"{self.date}: {self.get_fuel_type_display()} - {self.price}₽{station}"
 
 
-# Модель для статистики (может быть виртуальной или материализованной)
+# Модель для статистики
 class FuelStatistics(models.Model):
     """Модель для хранения агрегированной статистики"""
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, verbose_name=_('Транспортное средство'))
