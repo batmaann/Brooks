@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 
 
@@ -54,10 +54,13 @@ class GasStation(models.Model):
 class Vehicle(models.Model):
     """Модель для транспортных средств"""
     name = models.CharField(_('Название'), max_length=100)
-    brand = models.CharField(_('Марка'), max_length=50, blank=True)
-    model = models.CharField(_('Модель'), max_length=50, blank=True)
-    year = models.IntegerField(_('Год выпуска'), null=True, blank=True)
-    license_plate = models.CharField(_('Госномер'), max_length=20, blank=True)
+    brand = models.CharField(_('Марка'), max_length=50, null=True, blank=True)
+    model = models.CharField(_('Модель'), max_length=50, null=True, blank=True)
+    year = models.IntegerField(_('Год выпуска'), null=True, blank=True, validators=[
+        MinValueValidator(1900),
+        MaxValueValidator(2100)
+    ])
+    license_plate = models.CharField(_('Госномер'), max_length=20, blank=True, help_text='у123хм456')
     initial_odometer = models.IntegerField(_('Начальный пробег'), default=0)
     is_active = models.BooleanField(_('Активный'), default=True)
 
