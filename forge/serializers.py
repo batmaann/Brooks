@@ -6,3 +6,9 @@ class Vehicle(serializers.ModelSerializer):
     class Meta:
         model = models.Vehicle
         fields ='__all__'
+
+
+class Refueling(serializers.ModelSerializer):
+    class Meta:
+        model = models.Refueling
+        fields ='__all__'
