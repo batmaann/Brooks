@@ -100,7 +100,7 @@ class Refueling(models.Model):
                                      validators=[MinValueValidator(0)])
 
     # Связи
-    gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True,
+    gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True, blank=True,
                                     verbose_name=_('АЗС'))
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, verbose_name=_('Транспортное средство'))
     fuel_type = models.CharField(_('Тип топлива'), max_length=20, choices=FuelType.choices)
