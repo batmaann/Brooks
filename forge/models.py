@@ -69,6 +69,7 @@ class Vehicle(models.Model):
         verbose_name_plural = _('Транспортные средства')
         ordering = ['name']
 
+
     def __str__(self):
         return self.name
 
