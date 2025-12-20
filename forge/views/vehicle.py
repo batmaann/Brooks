@@ -10,12 +10,6 @@ from forge import filters
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-
-# class Status(APIView):
-#     def get(self, request):
-#         return Response({'status': 'oke'})
-
-
 class Vehicle(ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
