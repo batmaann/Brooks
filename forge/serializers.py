@@ -5,7 +5,7 @@ from forge import models
 class Vehicle(serializers.ModelSerializer):
     class Meta:
         model = models.Vehicle
-        fields ='__all__'
+        exclude = ['license_plate']
 
 
 class Refueling(serializers.ModelSerializer):
