@@ -82,10 +82,10 @@ class Vehicle(models.Model):
 
 
 class Refueling(models.Model):
-    """Модель для заправок топлива"""
+    """Модель для дозаправок топлива"""
     date = models.DateField(_('Дата заправки'))
-    month = models.IntegerField(_('Месяц'), choices=Month.choices)
-    quarter = models.IntegerField(_('Квартал'), choices=Quarter.choices)
+    month = models.IntegerField(_('Месяц'), null=True, blank=True, choices=Month.choices)
+    quarter = models.IntegerField(_('Квартал'), null=True, blank=True, choices=Quarter.choices)
 
     # Пробег
     mileage = models.IntegerField(_('Пробег с прошлой заправки (км)'), validators=[MinValueValidator(0)])
@@ -96,18 +96,18 @@ class Refueling(models.Model):
                                         validators=[MinValueValidator(0)])
     price_per_liter = models.DecimalField(_('Цена за литр (₽)'), max_digits=6, decimal_places=2,
                                           validators=[MinValueValidator(0)])
-    total_cost = models.DecimalField(_('Общая стоимость (₽)'), max_digits=8, decimal_places=2,
+    total_cost = models.DecimalField(_('Общая стоимость (₽)'), null=True, blank=True, max_digits=8, decimal_places=2,
                                      validators=[MinValueValidator(0)])
 
     # Связи
-    gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True,
+    gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True, blank=True,
                                     verbose_name=_('АЗС'))
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, verbose_name=_('Транспортное средство'))
-    fuel_type = models.CharField(_('Тип топлива'), max_length=20, choices=FuelType.choices)
+    vehicle = models.ForeignKey(Vehicle,null=True, blank=True, on_delete=models.CASCADE, verbose_name=_('Транспортное средство'))
+    fuel_type = models.CharField(_('Тип топлива'), null=True, blank=True, max_length=20, choices=FuelType.choices)
 
     # Дополнительная информация
-    is_full_tank = models.BooleanField(_('Полный бак'), default=False)
-    discount = models.DecimalField(_('Скидка (₽)'), max_digits=8, decimal_places=2, default=0,
+    is_full_tank = models.BooleanField(_('Полный бак'), null=True, blank=True, default=False)
+    discount = models.DecimalField(_('Скидка (₽)'), null=True, blank=True,  max_digits=8, decimal_places=2, default=0,
                                    validators=[MinValueValidator(0)])
     comment = models.TextField(_('Комментарий'), blank=True)
 
