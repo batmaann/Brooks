@@ -9,10 +9,12 @@ from drf_spectacular.views import (
 
 import forge.views.vehicle
 from forge.views.refueling import Refueling
+from forge.views.fuelStatistics import FuelStatistics
 
 router = DefaultRouter()
 router.register('vehicle', forge.views.vehicle.Vehicle)
 router.register('refuelings', Refueling)
+#router.register('fuelStatistics', FuelStatistics)
 
 
 urlpatterns = [

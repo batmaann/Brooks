@@ -2,6 +2,7 @@ from django.db import models
 from rest_framework import serializers
 from forge import models
 
+
 class Vehicle(serializers.ModelSerializer):
     class Meta:
         model = models.Vehicle
@@ -11,4 +12,10 @@ class Vehicle(serializers.ModelSerializer):
 class Refueling(serializers.ModelSerializer):
     class Meta:
         model = models.Refueling
-        fields ='__all__'
+        fields = '__all__'
+
+
+class FuelStatistics(serializers.ModelSerializer):
+    class Meta:
+        model = models.FuelStatistics
+        fields = '__all__'
