@@ -34,7 +34,7 @@ class Month(models.IntegerChoices):
 
 
 class GasStation(models.Model):
-    """Модель для автозаправочных станций"""
+    """Модель АЗС"""
     name = models.CharField(_('Название АЗС'), max_length=255)
     number = models.CharField(_('Номер АЗС'), max_length=50, blank=True)
     address = models.TextField(_('Адрес'), blank=True)

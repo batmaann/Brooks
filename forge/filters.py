@@ -22,8 +22,11 @@ class Refueling(django_filters.FilterSet):
 
 
 class FuelStatistics(django_filters.FilterSet):
-
-
     class Meta:
         model = models.Vehicle
+        fields = '__all__'
+
+class GasStation(django_filters.FilterSet):
+    class Meta:
+        model = models.GasStation
         fields = '__all__'
