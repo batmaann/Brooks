@@ -16,7 +16,7 @@ router = DefaultRouter()
 router.register('vehicle', forge.views.vehicle.Vehicle)
 router.register('refuelings', Refueling)
 router.register('gasStation', GasStation)
-#router.register('fuelStatistics', FuelStatistics)
+router.register('fuel-statistics', FuelStatistics)
 
 
 urlpatterns = [
