@@ -8,5 +8,5 @@ class Vehicle(ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
     queryset = models.Vehicle.objects.all()
-    serializer_class = serializers.Vehicle
+    serializer_class = serializers.serializer_class = serializers.Vehicle
     filterset_class = filters.Vehicle

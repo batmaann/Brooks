@@ -62,6 +62,7 @@ class Vehicle(models.Model):
     ])
     license_plate = models.CharField(_('Госномер'), max_length=20, blank=True, help_text='у123хм456')
     initial_odometer = models.IntegerField(_('Начальный пробег'), default=0)
+    current_odometer = models.IntegerField(_('Текущий пробег'), default=0)  # ← новое поле
     is_active = models.BooleanField(_('Активный'), default=True)
 
     class Meta:
@@ -69,16 +70,8 @@ class Vehicle(models.Model):
         verbose_name_plural = _('Транспортные средства')
         ordering = ['name']
 
-
     def __str__(self):
         return self.name
-
-    def current_odometer(self):
-        """Текущий пробег"""
-        last_refuel = Refueling.objects.filter(vehicle=self).order_by('-date').first()
-        if last_refuel:
-            return last_refuel.odometer
-        return self.initial_odometer
 
 
 class Refueling(models.Model):
@@ -87,9 +80,8 @@ class Refueling(models.Model):
     month = models.IntegerField(_('Месяц'), null=True, blank=True, choices=Month.choices)
     quarter = models.IntegerField(_('Квартал'), null=True, blank=True, choices=Quarter.choices)
 
-    # Пробег
+    # Пробег - ТОЛЬКО пробег с прошлой заправки
     mileage = models.IntegerField(_('Пробег с прошлой заправки (км)'), validators=[MinValueValidator(0)])
-    odometer = models.IntegerField(_('Показания одометра (км)'), validators=[MinValueValidator(0)])
 
     # Топливо
     fuel_quantity = models.DecimalField(_('Количество топлива (л)'), max_digits=6, decimal_places=2,
@@ -102,12 +94,13 @@ class Refueling(models.Model):
     # Связи
     gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True, blank=True,
                                     verbose_name=_('АЗС'))
-    vehicle = models.ForeignKey(Vehicle,null=True, blank=True, on_delete=models.CASCADE, verbose_name=_('Транспортное средство'))
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE,
+                                verbose_name=_('Транспортное средство'))
     fuel_type = models.CharField(_('Тип топлива'), null=True, blank=True, max_length=20, choices=FuelType.choices)
 
     # Дополнительная информация
     is_full_tank = models.BooleanField(_('Полный бак'), null=True, blank=True, default=False)
-    discount = models.DecimalField(_('Скидка (₽)'), null=True, blank=True,  max_digits=8, decimal_places=2, default=0,
+    discount = models.DecimalField(_('Скидка (₽)'), null=True, blank=True, max_digits=8, decimal_places=2, default=0,
                                    validators=[MinValueValidator(0)])
     comment = models.TextField(_('Комментарий'), blank=True)
 
@@ -128,6 +121,25 @@ class Refueling(models.Model):
     def __str__(self):
         return f"{self.date}: {self.vehicle} - {self.fuel_quantity}л"
 
+    @property
+    def odometer(self):
+        """Вычисляемый одометр на момент заправки"""
+        if not self.vehicle:
+            return 0
+
+        # Находим предыдущую заправку для этого авто
+        prev_refuel = Refueling.objects.filter(
+            vehicle=self.vehicle,
+            date__lt=self.date
+        ).order_by('-date').first()
+
+        if prev_refuel:
+            # Предыдущий одометр + пробег с той заправки
+            return prev_refuel.odometer + self.mileage
+        else:
+            # Первая заправка - используем начальный пробег
+            return self.vehicle.initial_odometer + self.mileage
+
     def save(self, *args, **kwargs):
         # Автоматический расчет общей стоимости, если не задана
         if not self.total_cost and self.fuel_quantity and self.price_per_liter:
@@ -138,20 +150,43 @@ class Refueling(models.Model):
             self.month = self.date.month
             self.quarter = ((self.date.month - 1) // 3) + 1
 
+        is_new = self.pk is None
+
+        # Сохраняем заправку
         super().save(*args, **kwargs)
+
+        # Обновляем текущий пробег в Vehicle
+        if self.vehicle:
+            # Важно: current_odometer должен быть МАКСИМАЛЬНЫМ значением odometer среди всех заправок
+            # Это решает проблему с обновлением пробега при редактировании старых заправок
+
+            # Находим последнюю заправку (по дате)
+            last_refuel = Refueling.objects.filter(
+                vehicle=self.vehicle
+            ).order_by('-date').first()
+
+            if last_refuel:
+                # Устанавливаем текущий пробег как одометр последней заправки
+                self.vehicle.current_odometer = last_refuel.odometer
+            else:
+                # Если нет заправок, используем начальный пробег
+                self.vehicle.current_odometer = self.vehicle.initial_odometer
+
+            self.vehicle.save(update_fields=['current_odometer'])
 
     @property
     def effective_cost(self):
         """Эффективная стоимость с учетом скидки"""
-        return self.total_cost - self.discount
+        if self.total_cost:
+            return self.total_cost - (self.discount or 0)
+        return 0
 
     @property
     def fuel_consumption(self):
         """Расход топлива на 100 км"""
-        if self.mileage > 0:
+        if self.mileage > 0 and self.fuel_quantity:
             return (self.fuel_quantity / self.mileage) * 100
         return 0
-
 
 class FuelPrice(models.Model):
     """Модель для отслеживания цен на топливо"""
