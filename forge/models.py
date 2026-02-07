@@ -141,37 +141,22 @@ class Refueling(models.Model):
             return self.vehicle.initial_odometer + self.mileage
 
     def save(self, *args, **kwargs):
-        # Автоматический расчет общей стоимости, если не задана
+        # 1. Сначала рассчитываем общую стоимость, если она не указана
         if not self.total_cost and self.fuel_quantity and self.price_per_liter:
             self.total_cost = self.fuel_quantity * self.price_per_liter
 
-        # Автоматическое определение месяца и квартала из даты
-        if self.date:
-            self.month = self.date.month
-            self.quarter = ((self.date.month - 1) // 3) + 1
-
-        is_new = self.pk is None
-
-        # Сохраняем заправку
+        # 2. Сохраняем саму заправку
         super().save(*args, **kwargs)
 
-        # Обновляем текущий пробег в Vehicle
+        # 3. Обновляем одометр в транспортном средстве
         if self.vehicle:
-            # Важно: current_odometer должен быть МАКСИМАЛЬНЫМ значением odometer среди всех заправок
-            # Это решает проблему с обновлением пробега при редактировании старых заправок
+            # Считаем сумму всех пробегов (mileage) этого авто + начальный пробег
+            from django.db.models import Sum
+            total_mileage = Refueling.objects.filter(vehicle=self.vehicle).aggregate(
+                total=Sum('mileage')
+            )['total'] or 0
 
-            # Находим последнюю заправку (по дате)
-            last_refuel = Refueling.objects.filter(
-                vehicle=self.vehicle
-            ).order_by('-date').first()
-
-            if last_refuel:
-                # Устанавливаем текущий пробег как одометр последней заправки
-                self.vehicle.current_odometer = last_refuel.odometer
-            else:
-                # Если нет заправок, используем начальный пробег
-                self.vehicle.current_odometer = self.vehicle.initial_odometer
-
+            self.vehicle.current_odometer = self.vehicle.initial_odometer + total_mileage
             self.vehicle.save(update_fields=['current_odometer'])
 
     @property
@@ -187,6 +172,7 @@ class Refueling(models.Model):
         if self.mileage > 0 and self.fuel_quantity:
             return (self.fuel_quantity / self.mileage) * 100
         return 0
+
 
 class FuelPrice(models.Model):
     """Модель для отслеживания цен на топливо"""
