@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
-
+from django.db.models import Sum
 
 class FuelType(models.TextChoices):
     AI92 = 'АИ-92', _('АИ-92')
@@ -62,7 +62,7 @@ class Vehicle(models.Model):
     ])
     license_plate = models.CharField(_('Госномер'), max_length=20, blank=True, help_text='у123хм456')
     initial_odometer = models.IntegerField(_('Начальный пробег'), default=0)
-    current_odometer = models.IntegerField(_('Текущий пробег'), default=0)  # ← новое поле
+    current_odometer = models.IntegerField(_('Текущий пробег'), default=0)
     is_active = models.BooleanField(_('Активный'), default=True)
 
     class Meta:
@@ -80,10 +80,7 @@ class Refueling(models.Model):
     month = models.IntegerField(_('Месяц'), null=True, blank=True, choices=Month.choices)
     quarter = models.IntegerField(_('Квартал'), null=True, blank=True, choices=Quarter.choices)
 
-    # Пробег - ТОЛЬКО пробег с прошлой заправки
     mileage = models.IntegerField(_('Пробег с прошлой заправки (км)'), validators=[MinValueValidator(0)])
-
-    # Топливо
     fuel_quantity = models.DecimalField(_('Количество топлива (л)'), max_digits=6, decimal_places=2,
                                         validators=[MinValueValidator(0)])
     price_per_liter = models.DecimalField(_('Цена за литр (₽)'), max_digits=6, decimal_places=2,
@@ -141,21 +138,16 @@ class Refueling(models.Model):
             return self.vehicle.initial_odometer + self.mileage
 
     def save(self, *args, **kwargs):
-        # 1. Сначала рассчитываем общую стоимость, если она не указана
         if not self.total_cost and self.fuel_quantity and self.price_per_liter:
             self.total_cost = self.fuel_quantity * self.price_per_liter
-
-        # 2. Сохраняем саму заправку
         super().save(*args, **kwargs)
 
         # 3. Обновляем одометр в транспортном средстве
         if self.vehicle:
             # Считаем сумму всех пробегов (mileage) этого авто + начальный пробег
-            from django.db.models import Sum
             total_mileage = Refueling.objects.filter(vehicle=self.vehicle).aggregate(
                 total=Sum('mileage')
             )['total'] or 0
-
             self.vehicle.current_odometer = self.vehicle.initial_odometer + total_mileage
             self.vehicle.save(update_fields=['current_odometer'])
 
