@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% block extrahead %}
+<style>
+    #header {
+        background: #28a745 !important; /* Насыщенный зеленый */
+    }
+    #branding h1 a:hover {
+        color: #d4edda;
+    }
+</style>
+{% endblock %}
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Brooks</a></h1>
+{% if user.is_anonymous %}
+{% include "admin/color_theme_toggle.html" %}
+{% endif %}
+{% endblock %}
