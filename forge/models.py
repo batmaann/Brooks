@@ -87,6 +87,10 @@ class Refueling(models.Model):
                                           validators=[MinValueValidator(0)])
     total_cost = models.DecimalField(_('Общая стоимость (₽)'), null=True, blank=True, max_digits=8, decimal_places=2,
                                      validators=[MinValueValidator(0)])
+    service_operation = models.DecimalField(
+        'Работа сервиса',
+        default=0, blank=True,
+        max_digits=8, decimal_places=2)
 
     # Связи
     gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True, blank=True,
@@ -139,7 +143,7 @@ class Refueling(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.total_cost and self.fuel_quantity and self.price_per_liter:
-            self.total_cost = self.fuel_quantity * self.price_per_liter
+            self.total_cost = self.fuel_quantity * self.price_per_liter + self.service_operation
         super().save(*args, **kwargs)
 
         # 3. Обновляем одометр в транспортном средстве
