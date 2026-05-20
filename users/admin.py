@@ -6,7 +6,8 @@ from django.core.checks import register
 from users import models
 
 
-@admin.register(models.Profile)
-class Profile(admin.ModelAdmin):
+@admin.register(models.Users)
+class UsersAdmin(admin.ModelAdmin):
     pass
+
 
