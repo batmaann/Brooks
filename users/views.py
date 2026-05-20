@@ -5,10 +5,11 @@ from rest_framework.authentication import SessionAuthentication, TokenAuthentica
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework.generics import GenericAPIView
 
+import users.models
 
 
 class RegisterUser(GenericAPIView):
-    queryset = models.User
+    queryset = users.models.User
 
     def post(self, request):
         pass
