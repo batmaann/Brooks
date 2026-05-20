@@ -13,3 +13,4 @@ class RegisterUser(GenericAPIView):
 
     def post(self, request):
         pass
+
