@@ -9,7 +9,7 @@ from users import models
 
 
 class RegisterUser(GenericAPIView):
-    queryset = models.User
+    queryset = models.Profile
 
     def post(self, request):
 
