@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-
+import users.views
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -29,6 +29,9 @@ urlpatterns = [
     path('api/', SpectacularSwaggerView.as_view(url_name='schema')),
 
     # path('status/', forge.views.vehicle.Status.as_view()),
+    path('user/register/', users.views.RegisterUser.as_view(), name='user_register'),
+    path('user/login/', users.views.LoginUser.as_view()),
+
 ]
 
 urlpatterns += router.urls
