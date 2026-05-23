@@ -1,20 +1,8 @@
-from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
-from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
-from rest_framework.generics import GenericAPIView
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.utils.timezone import now
-from django.contrib.auth.models import AbstractUser
 from users import models
 from users import serializers
-from django.contrib.auth.models import User
 
 
 class RegisterUser(GenericAPIView):
@@ -39,11 +27,5 @@ class LoginUser(GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # token = Token.objects.get(user__username=serializer,validate_data['login'])
-        token = Token.objects.get(user__username=serializer.validated_data['login'])
-
+        token = Token.objects.get(user__username=serializer.validated_data['username'])
         return Response({'token': token.key})
-
-
-
-        pass
