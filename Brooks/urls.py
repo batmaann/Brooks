@@ -21,14 +21,11 @@ router.register('fuel-statistics', FuelStatistics)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
     # OpenAPI schema
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-
     # Swagger UI
     path('api/', SpectacularSwaggerView.as_view(url_name='schema')),
 
-    # path('status/', forge.views.vehicle.Status.as_view()),
     path('user/register/', users.views.RegisterUser.as_view(), name='user_register'),
     path('user/login/', users.views.LoginUser.as_view(), name='user_login'),
 
