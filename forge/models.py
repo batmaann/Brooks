@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Sum
+from django.conf import settings
+
 
 class FuelType(models.TextChoices):
     AI92 = 'АИ-92', _('АИ-92')
@@ -64,6 +66,12 @@ class Vehicle(models.Model):
     initial_odometer = models.IntegerField(_('Начальный пробег'), default=0)
     current_odometer = models.IntegerField(_('Текущий пробег'), default=0)
     is_active = models.BooleanField(_('Активный'), default=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_('Владелец'),
+        related_name='vehicles'
+    )
 
     class Meta:
         verbose_name = _('Транспортное средство')
@@ -109,6 +117,15 @@ class Refueling(models.Model):
     created_at = models.DateTimeField(_('Дата создания'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Дата обновления'), auto_now=True)
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name=_('Пользователь'),
+        related_name='refuelings',
+        null=True,
+        blank=True
+    )
+
     class Meta:
         verbose_name = _('Заправка')
         verbose_name_plural = _('Заправки')
@@ -121,6 +138,11 @@ class Refueling(models.Model):
 
     def __str__(self):
         return f"{self.date}: {self.vehicle} - {self.fuel_quantity}л"
+
+    def save(self, *args, **kwargs):
+        if not self.user and self.vehicle:
+            self.user = self.vehicle.user
+        super().save(*args, **kwargs)
 
     @property
     def odometer(self):
