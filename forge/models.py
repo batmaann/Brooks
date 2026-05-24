@@ -122,8 +122,6 @@ class Refueling(models.Model):
         on_delete=models.CASCADE,
         verbose_name=_('Пользователь'),
         related_name='refuelings',
-        null=True,
-        blank=True
     )
 
     class Meta:

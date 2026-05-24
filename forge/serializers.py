@@ -36,6 +36,14 @@ class Refueling(serializers.ModelSerializer):
     fuel_consumption = serializers.SerializerMethodField(read_only=True)
     effective_cost = serializers.SerializerMethodField(read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    vehicle = serializers.PrimaryKeyRelatedField(queryset=models.Vehicle.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = self.context.get('request')
+        if request and request.user and not request.user.is_anonymous:
+            self.fields['vehicle'].queryset = models.Vehicle.objects.filter(user=request.user)
 
     class Meta:
         model = models.Refueling
