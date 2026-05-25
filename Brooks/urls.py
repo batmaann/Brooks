@@ -14,7 +14,7 @@ from forge.views.fuelStatistics import FuelStatistics
 
 router = DefaultRouter()
 router.register('vehicle', forge.views.vehicle.Vehicle)
-router.register('refuelings', Refueling)
+router.register('refuelings', Refueling, basename='refueling')
 router.register('gasStation', GasStation)
 router.register('fuel-statistics', FuelStatistics)
 
