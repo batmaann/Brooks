@@ -5,6 +5,7 @@ from users import models
 class RegisterUser(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(min_length=8)
+    phone = serializers.CharField(max_length=20)
 
     def validate_username(self, value):
         if models.User.objects.filter(username=value).exists():
