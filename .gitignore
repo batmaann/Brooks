@@ -1,2 +1,12 @@
+project/local_settings.py
+*.sqlite3
+/.idea/
+*.pyc
+node_modules
+package-lock.json
 venv
-db.sqlite3
+virt_env
+media
+media-test
+/static
+.coverage

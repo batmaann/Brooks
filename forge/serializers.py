@@ -5,24 +5,52 @@ from forge import models
 
 class Vehicle(serializers.ModelSerializer):
     current_odometer = serializers.IntegerField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = models.Vehicle
         exclude = ['license_plate']
-        read_only_fields = ['current_odometer']
+        read_only_fields = ['current_odometer', 'user']
+
+    def create(self, validated_data):
+        """Автоматически устанавливаем текущего пользователя"""
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """Не даем изменить владельца"""
+        validated_data.pop('user', None)
+        return super().update(instance, validated_data)
+
+    def validate(self, data):
+        """Дополнительная валидация"""
+        if 'user' in data and data['user'] != self.context['request'].user:
+            raise serializers.ValidationError({
+                "user": "Нельзя изменить владельца транспортного средства"
+            })
+        return data
 
 
 class Refueling(serializers.ModelSerializer):
     odometer = serializers.SerializerMethodField(read_only=True)
     fuel_consumption = serializers.SerializerMethodField(read_only=True)
     effective_cost = serializers.SerializerMethodField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    vehicle = serializers.PrimaryKeyRelatedField(queryset=models.Vehicle.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = self.context.get('request')
+        if request and request.user and not request.user.is_anonymous:
+            self.fields['vehicle'].queryset = models.Vehicle.objects.filter(user=request.user)
 
     class Meta:
         model = models.Refueling
         fields = '__all__'
         read_only_fields = [
             'odometer', 'month', 'quarter', 'created_at', 'updated_at',
-            'total_cost', 'fuel_consumption', 'effective_cost'
+            'total_cost', 'fuel_consumption', 'effective_cost', 'user'
         ]
 
     def get_odometer(self, obj):
@@ -36,6 +64,15 @@ class Refueling(serializers.ModelSerializer):
     def get_effective_cost(self, obj):
         """Стоимость с учетом скидки"""
         return obj.effective_cost
+
+    def validate_vehicle(self, value):
+        """Проверяем, что транспортное средство принадлежит пользователю"""
+        user = self.context['request'].user
+        if value.user != user:
+            raise serializers.ValidationError(
+                "Это транспортное средство не принадлежит вам"
+            )
+        return value
 
     def validate(self, data):
         """Валидация последовательности заправок"""
@@ -68,18 +105,40 @@ class Refueling(serializers.ModelSerializer):
                     "mileage": "Пробег должен быть больше 0"
                 })
 
+            if mileage > 5000:
+                raise serializers.ValidationError({
+                    "mileage": "Пробег между заправками не может превышать 5000 км"
+                })
+
         return data
 
     def create(self, validated_data):
-        """Создание заправки с автоматическим расчетом total_cost"""
+        """Создание заправки с автоматическим расчетом total_cost и установкой user"""
         # Убедимся, что total_cost вычислен если не задан
         fuel_quantity = validated_data.get('fuel_quantity')
         price_per_liter = validated_data.get('price_per_liter')
+        service_operation = validated_data.get('service_operation', 0)
 
         if fuel_quantity and price_per_liter and not validated_data.get('total_cost'):
-            validated_data['total_cost'] = fuel_quantity * price_per_liter
+            validated_data['total_cost'] = fuel_quantity * price_per_liter + service_operation
+
+        # Автоматически устанавливаем пользователя
+        validated_data['user'] = self.context['request'].user
 
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """При обновлении проверяем права"""
+        # Не даем изменить user
+        validated_data.pop('user', None)
+
+        # Не даем изменить vehicle на чужой
+        if 'vehicle' in validated_data and validated_data['vehicle'].user != self.context['request'].user:
+            raise serializers.ValidationError({
+                "vehicle": "Нельзя перенести заправку на чужое транспортное средство"
+            })
+
+        return super().update(instance, validated_data)
 
 
 class FuelStatistics(serializers.ModelSerializer):

@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 class Refueling(ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
-    queryset = models.Refueling.objects.all()
     serializer_class = serializers.Refueling
     filterset_class = filters.Refueling
+
+    def get_queryset(self):
+        return models.Refueling.objects.filter(user=self.request.user)
