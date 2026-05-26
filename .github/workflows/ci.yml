@@ -1,6 +1,5 @@
 name: Django CI
 
-
 on: [push]
 
 jobs:
@@ -21,7 +20,6 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-
-    - name: Run Django Tests
+    - name: Run Pytest
       run: |
-        python manage.py test
+        pytest
