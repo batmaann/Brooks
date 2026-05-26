@@ -1,14 +1,41 @@
-# from django.apps import apps
-# import pytest
-# from django.contrib.auth.models import Permission
-# from rest_framework.test import APIClient
-# from django.urls import reverse
-#
-#
-# pytestmark = pytest.mark.django_db
-#
+import pytest
+from django.apps import apps
+from django.contrib.auth.models import Permission
+from django.urls import reverse
+from rest_framework.test import APIClient
+import forge.models
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def user(django_user_model):
+    user = django_user_model.objects.create_user(username="testuser", password="pass11111111")
+    perms = Permission.objects.filter(content_type__app_label='forge', content_type__model='refueling')
+    user.user_permissions.set(perms)
+    return user
+
+
+@pytest.fixture
+def api_client(user):
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+def test_create_vehicle(api_client, user):
+    url = reverse("vehicle-list")
+    payload = {
+        "name": "Toyota Camry"
+
+    }
+
+    response = api_client.post(url, data=payload, format="json")
+    assert response.status_code == 201
+    assert response.data["name"] == payload["name"]
+    assert forge.models.Vehicle.objects.count() == 1
+
 # #TODO
-# # Создание транспорта
+# # Создание транспорта сдалано
 # # Получение транспорта необходимым пользователем
 # # отказ в доступе получение чужим пользователем
 # # отказ в доступе вообще
