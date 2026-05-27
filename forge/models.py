@@ -1,7 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Sum
 from django.conf import settings
 
 
@@ -81,6 +82,17 @@ class Vehicle(models.Model):
     def __str__(self):
         return self.name
 
+    def update_current_odometer(self):
+        """Метод точного расчета: Начальный пробег + сумма всех пробегов заправок"""
+        # Считаем сумму полей mileage для ВСЕХ оставшихся заправок этого автомобиля
+        total_mileage = self.refueling_set.aggregate(total=models.Sum('mileage'))['total'] or 0
+
+        # Текущий пробег = Начальный пробег автомобиля + сумма всех поездок
+        self.current_odometer = self.initial_odometer + total_mileage
+
+        # Сохраняем ТОЛЬКО поле текущего пробега, начальный пробег не меняется!
+        self.save(update_fields=['current_odometer'])
+
 
 class Refueling(models.Model):
     """Модель для дозаправок топлива"""
@@ -100,20 +112,17 @@ class Refueling(models.Model):
         default=0, blank=True,
         max_digits=8, decimal_places=2)
 
-    # Связи
     gas_station = models.ForeignKey(GasStation, on_delete=models.SET_NULL, null=True, blank=True,
                                     verbose_name=_('АЗС'))
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE,
                                 verbose_name=_('Транспортное средство'))
     fuel_type = models.CharField(_('Тип топлива'), null=True, blank=True, max_length=20, choices=FuelType.choices)
 
-    # Дополнительная информация
     is_full_tank = models.BooleanField(_('Полный бак'), null=True, blank=True, default=False)
     discount = models.DecimalField(_('Скидка (₽)'), null=True, blank=True, max_digits=8, decimal_places=2, default=0,
                                    validators=[MinValueValidator(0)])
     comment = models.TextField(_('Комментарий'), blank=True)
 
-    # Метаданные
     created_at = models.DateTimeField(_('Дата создания'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Дата обновления'), auto_now=True)
 
@@ -140,6 +149,10 @@ class Refueling(models.Model):
     def save(self, *args, **kwargs):
         if not self.user and self.vehicle:
             self.user = self.vehicle.user
+
+        if not self.total_cost and self.fuel_quantity and self.price_per_liter:
+            self.total_cost = self.fuel_quantity * self.price_per_liter + self.service_operation
+
         super().save(*args, **kwargs)
 
     @property
@@ -148,32 +161,15 @@ class Refueling(models.Model):
         if not self.vehicle:
             return 0
 
-        # Находим предыдущую заправку для этого авто
         prev_refuel = Refueling.objects.filter(
             vehicle=self.vehicle,
             date__lt=self.date
         ).order_by('-date').first()
 
         if prev_refuel:
-            # Предыдущий одометр + пробег с той заправки
             return prev_refuel.odometer + self.mileage
         else:
-            # Первая заправка - используем начальный пробег
             return self.vehicle.initial_odometer + self.mileage
-
-    def save(self, *args, **kwargs):
-        if not self.total_cost and self.fuel_quantity and self.price_per_liter:
-            self.total_cost = self.fuel_quantity * self.price_per_liter + self.service_operation
-        super().save(*args, **kwargs)
-
-        # 3. Обновляем одометр в транспортном средстве
-        if self.vehicle:
-            # Считаем сумму всех пробегов (mileage) этого авто + начальный пробег
-            total_mileage = Refueling.objects.filter(vehicle=self.vehicle).aggregate(
-                total=Sum('mileage')
-            )['total'] or 0
-            self.vehicle.current_odometer = self.vehicle.initial_odometer + total_mileage
-            self.vehicle.save(update_fields=['current_odometer'])
 
     @property
     def effective_cost(self):
@@ -188,6 +184,14 @@ class Refueling(models.Model):
         if self.mileage > 0 and self.fuel_quantity:
             return (self.fuel_quantity / self.mileage) * 100
         return 0
+
+#TODO не забыть про изминения PATH
+@receiver(post_save, sender=Refueling)
+@receiver(post_delete, sender=Refueling)
+def handle_refueling_change(sender, instance, **kwargs):
+
+    if instance.vehicle:
+        instance.vehicle.update_current_odometer()
 
 
 class FuelPrice(models.Model):
