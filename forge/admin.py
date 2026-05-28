@@ -12,7 +12,7 @@ class GasStation(admin.ModelAdmin):
 
 @admin.register(models.Vehicle)
 class Vehicle(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'user', 'brand', 'model', 'year', 'license_plate',)
 
 
 @admin.register(models.Refueling)
