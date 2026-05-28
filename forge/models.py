@@ -4,7 +4,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-
+from decimal import Decimal
 
 class FuelType(models.TextChoices):
     AI92 = 'АИ-92', _('АИ-92')
@@ -84,13 +84,8 @@ class Vehicle(models.Model):
 
     def update_current_odometer(self):
         """Метод точного расчета: Начальный пробег + сумма всех пробегов заправок"""
-        # Считаем сумму полей mileage для ВСЕХ оставшихся заправок этого автомобиля
         total_mileage = self.refueling_set.aggregate(total=models.Sum('mileage'))['total'] or 0
-
-        # Текущий пробег = Начальный пробег автомобиля + сумма всех поездок
         self.current_odometer = self.initial_odometer + total_mileage
-
-        # Сохраняем ТОЛЬКО поле текущего пробега, начальный пробег не меняется!
         self.save(update_fields=['current_odometer'])
 
 
@@ -150,9 +145,9 @@ class Refueling(models.Model):
         if not self.user and self.vehicle:
             self.user = self.vehicle.user
 
-        if not self.total_cost and self.fuel_quantity and self.price_per_liter:
-            self.total_cost = self.fuel_quantity * self.price_per_liter + self.service_operation
-
+        if self.fuel_quantity and self.price_per_liter:
+            service_ops = Decimal(str(self.service_operation or 0))
+            self.total_cost = (self.fuel_quantity * self.price_per_liter) + service_ops
         super().save(*args, **kwargs)
 
     @property
