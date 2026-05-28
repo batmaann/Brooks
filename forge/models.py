@@ -180,11 +180,9 @@ class Refueling(models.Model):
             return (self.fuel_quantity / self.mileage) * 100
         return 0
 
-#TODO не забыть про изминения PATH
 @receiver(post_save, sender=Refueling)
 @receiver(post_delete, sender=Refueling)
 def handle_refueling_change(sender, instance, **kwargs):
-
     if instance.vehicle:
         instance.vehicle.update_current_odometer()
 
