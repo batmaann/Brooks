@@ -64,6 +64,54 @@ def test_create_refueling(api_client, vehicle, user):
     assert isinstance(response.data, dict)
     assert "id" in response.data
 
+
+def test_refueling_creates_expense(api_client, vehicle, user):
+    Expense = apps.get_model("expenses", "Expense")
+    url = reverse("refueling-list")
+
+    payload = {
+        "vehicle": vehicle.id,
+        "date": timezone.now().date().isoformat(),
+        "mileage": 100,
+        "fuel_quantity": "45.50",
+        "price_per_liter": "55.30",
+        "discount": "10.00",
+    }
+
+    response = api_client.post(url, data=payload, format="json")
+
+    assert response.status_code == 201
+    expense = Expense.objects.get(source_app="forge", source_model="refueling", source_id=response.data["id"])
+    assert expense.user == user
+    assert expense.category.slug == "fuel"
+    assert expense.amount == Decimal("2506.15")
+
+
+def test_refueling_updates_and_deletes_expense(api_client, vehicle):
+    Expense = apps.get_model("expenses", "Expense")
+    url = reverse("refueling-list")
+    payload = {
+        "vehicle": vehicle.id,
+        "date": timezone.now().date().isoformat(),
+        "mileage": 100,
+        "fuel_quantity": "10.00",
+        "price_per_liter": "50.00",
+    }
+    response = api_client.post(url, data=payload, format="json")
+    refueling_id = response.data["id"]
+
+    detail_url = reverse("refueling-detail", kwargs={"pk": refueling_id})
+    update_response = api_client.patch(detail_url, data={"price_per_liter": "60.00"}, format="json")
+
+    assert update_response.status_code == 200
+    expense = Expense.objects.get(source_app="forge", source_model="refueling", source_id=refueling_id)
+    assert expense.amount == Decimal("600.00")
+
+    delete_response = api_client.delete(detail_url)
+
+    assert delete_response.status_code == 204
+    assert not Expense.objects.filter(source_app="forge", source_model="refueling", source_id=refueling_id).exists()
+
 # TODO
 # Автоподстановка пользователя (user):
 # Проверить, что если user не указан при сохранении,

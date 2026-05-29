@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from decimal import Decimal
+from expenses.models import Expense, ExpenseCategory
 from .consts import *
 
 
@@ -158,6 +159,32 @@ class Refueling(models.Model):
 def handle_refueling_change(sender, instance, **kwargs):
     if instance.vehicle:
         instance.vehicle.update_current_odometer()
+
+
+@receiver(post_save, sender=Refueling)
+def sync_refueling_expense(sender, instance, **kwargs):
+    """Держим общую таблицу трат синхронной с заправками."""
+    category, _ = ExpenseCategory.objects.get_or_create(
+        slug='fuel',
+        defaults={'name': 'Заправка'},
+    )
+    Expense.objects.update_or_create(
+        source_app='forge',
+        source_model='refueling',
+        source_id=instance.pk,
+        defaults={
+            'date': instance.date,
+            'category': category,
+            'amount': instance.effective_cost,
+            'description': f"Заправка {instance.vehicle}",
+            'user': instance.user,
+        },
+    )
+
+
+@receiver(post_delete, sender=Refueling)
+def delete_refueling_expense(sender, instance, **kwargs):
+    Expense.objects.filter(source_app='forge', source_model='refueling', source_id=instance.pk).delete()
 
 
 class FuelPrice(models.Model):
