@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_filters',
     'import_export',
+    'expenses',
     'forge',
     'users',
     'utilities',

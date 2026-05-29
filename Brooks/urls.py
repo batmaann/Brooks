@@ -11,6 +11,7 @@ import forge.views.vehicle
 from forge.views.refueling import Refueling
 from forge.views.gasStation import GasStation
 from forge.views.fuelStatistics import FuelStatistics
+from expenses.views import Expense, ExpenseCategory
 
 router = DefaultRouter()
 router.register('vehicle', forge.views.vehicle.Vehicle, basename='vehicle')
@@ -18,6 +19,8 @@ router.register('vehicle', forge.views.vehicle.Vehicle, basename='vehicle')
 router.register('refuelings', Refueling, basename='refueling')
 router.register('gasStation', GasStation)
 router.register('fuel-statistics', FuelStatistics)
+router.register('expenses', Expense, basename='expense')
+router.register('expense-categories', ExpenseCategory, basename='expense-category')
 
 
 urlpatterns = [
