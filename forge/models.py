@@ -114,7 +114,7 @@ class Refueling(models.Model):
         return f"{self.date}: {self.vehicle} - {self.fuel_quantity}л"
 
     def save(self, *args, **kwargs):
-        if not self.user and self.vehicle:
+        if not self.user_id and self.vehicle_id:
             self.user = self.vehicle.user
 
         if self.fuel_quantity and self.price_per_liter:

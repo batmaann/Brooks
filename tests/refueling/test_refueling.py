@@ -128,9 +128,15 @@ def test_refueling_odometer_adds_previous_refuelings(vehicle, user):
 
 
 def test_refueling_calculated_cost_fields(refueling):
-    assert refueling.total_cost == Decimal("2516.50")
-    assert refueling.effective_cost == Decimal("2516.50")
+    assert refueling.total_cost == Decimal("2516.1500")
+    assert refueling.effective_cost == Decimal("2516.1500")
     assert refueling.fuel_consumption == Decimal("45.50")
+
+
+def test_refueling_effective_cost_subtracts_discount(refueling):
+    refueling.discount = Decimal("100.00")
+
+    assert refueling.effective_cost == Decimal("2416.1500")
 
 
 @pytest.mark.parametrize(
