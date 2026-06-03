@@ -37,6 +37,18 @@ def api_client(user):
     return client
 
 
+@pytest.fixture
+def vehicle(user):
+    return forge.models.Vehicle.objects.create(
+        name="Toyota Camry",
+        brand="Toyota",
+        model="Camry",
+        year=2020,
+        initial_odometer=1000,
+        user=user,
+    )
+
+
 def test_create_vehicle(api_client, user):
     url = reverse("vehicle-list")
     payload = {
@@ -89,12 +101,62 @@ def test_get_vehicle_by_id(api_client, user, client):
     assert response_detail.data["name"] == "Ford Focus"
     assert forge.models.Vehicle.objects.count() == 2
 
+
+def test_update_vehicle(api_client, vehicle):
+    url = reverse("vehicle-detail", kwargs={"pk": vehicle.id})
+    payload = {
+        "name": "Toyota Camry Updated",
+        "brand": "Toyota",
+        "model": "Camry XV70",
+        "year": 2021,
+        "initial_odometer": 1500,
+        "is_active": False,
+    }
+
+    response = api_client.patch(url, data=payload, format="json")
+
+    vehicle.refresh_from_db()
+    assert response.status_code == 200
+    assert response.data["name"] == payload["name"]
+    assert response.data["model"] == payload["model"]
+    assert vehicle.name == payload["name"]
+    assert vehicle.year == payload["year"]
+    assert vehicle.initial_odometer == payload["initial_odometer"]
+    assert vehicle.is_active is False
+
+
+def test_update_vehicle_does_not_change_owner(api_client, vehicle, user, user2):
+    url = reverse("vehicle-detail", kwargs={"pk": vehicle.id})
+
+    response = api_client.patch(
+        url,
+        data={
+            "name": "Toyota Camry Updated",
+            "user": user2.id,
+        },
+        format="json",
+    )
+
+    vehicle.refresh_from_db()
+    assert response.status_code == 200
+    assert vehicle.user == user
+    assert vehicle.name == "Toyota Camry Updated"
+
+
+def test_delete_vehicle(api_client, vehicle):
+    url = reverse("vehicle-detail", kwargs={"pk": vehicle.id})
+
+    response = api_client.delete(url)
+
+    assert response.status_code == 204
+    assert forge.models.Vehicle.objects.count() == 0
+
 # #TODO
 # # Создание транспорта Done
 # # Получение транспорта необходимым пользователем Done
 # # отказ в доступе получение чужим пользователем Done
 # # отказ в доступе вообще Done
 # # получение доступа к транспорту по айди Done
-# # Изминение траспорта
-# # удаление траспорта
+# # Изминение траспорта Done
+# # удаление траспорта Done
 #
