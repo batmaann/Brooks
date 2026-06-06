@@ -109,3 +109,4 @@ urllib3==2.6.2
 vine==5.1.0
 wcwidth==0.7.0
 wheel==0.45.1
+gunicorn==26.0.0
