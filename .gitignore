@@ -11,3 +11,4 @@ media
 media-test
 /static
 .coverage
+.env
