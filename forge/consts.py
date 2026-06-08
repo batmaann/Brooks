@@ -30,3 +30,8 @@ class FuelType(models.TextChoices):
     AI98 = 'АИ-98', _('АИ-98')
     DIESEL = 'ДТ', _('Дизель')
     GAS = 'ГАЗ', _('Газ')
+
+class FinanceType(models.TextChoices):
+    EXPENSE = 'expense', 'Трата'
+    INCOME = 'income', 'Доход'
+    SAVING = 'saving', 'Сбережение'

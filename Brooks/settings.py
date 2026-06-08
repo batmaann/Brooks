@@ -21,7 +21,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_filters',
     'import_export',
-    'forge',
+    'core.apps.CoreConfig',
+    'forge.apps.ForgeConfig',
     'users',
     'utilities',
 ]
