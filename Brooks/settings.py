@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'import_export',
     'forge',
     'users',
-    'utilities',
+    'billHome',
 ]
 
 TEMPLATES = [
