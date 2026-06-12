@@ -22,14 +22,15 @@ class Refueling(django_filters.FilterSet):
 
 
 class FuelStatistics(django_filters.FilterSet):
-    vehicle = django_filters.NumberFilter(field_name='vehicle__id')  # изменено с vehicle_id на vehicle
+    vehicle = django_filters.NumberFilter(field_name='vehicle__id')
     period_from = django_filters.DateFilter(field_name='period', lookup_expr='gte')
     period_to = django_filters.DateFilter(field_name='period', lookup_expr='lte')
     period_type = django_filters.ChoiceFilter(choices=models.FuelStatistics._meta.get_field('period_type').choices)
 
     class Meta:
-        model = models.FuelStatistics  # убедитесь, что это модель FuelStatistics, а не Vehicle
+        model = models.FuelStatistics
         fields = ['vehicle', 'period_type']
+
 
 class GasStation(django_filters.FilterSet):
     class Meta:
